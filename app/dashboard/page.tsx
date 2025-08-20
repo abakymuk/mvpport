@@ -11,6 +11,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sidebar } from '@/components/sidebar';
 import { OrgsList } from '@/components/dashboard/orgs-list';
+import { OnboardingWidget } from '@/components/dashboard/onboarding-widget';
 import { Users, TrendingUp, Activity, Target } from 'lucide-react';
 
 interface KPICardProps {
@@ -83,6 +84,11 @@ export default function DashboardPage() {
                   Обзор ключевых метрик и активности
                 </p>
               </div>
+            </div>
+
+            {/* Onboarding Widget */}
+            <div className="mt-8">
+              <OnboardingWidget />
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
