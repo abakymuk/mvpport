@@ -192,3 +192,7 @@ pnpm dev --no-turbopack
 ## Следующие шаги
 
 См. документацию в папке `tickets/` для планирования дальнейшей разработки.
+
+## CI/CD Pipeline Test
+
+This section is added to test the GitHub Actions CI/CD pipeline.
