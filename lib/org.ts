@@ -105,7 +105,10 @@ export async function getUserOrgs(
   userId: string
 ): Promise<OrgWithMembership[]> {
   try {
+    console.log('getUserOrgs - Starting with userId:', userId);
+
     const supabase = await createClient();
+    console.log('getUserOrgs - Supabase client created');
 
     const { data: orgs, error } = await supabase
       .from('orgs')
@@ -118,10 +121,17 @@ export async function getUserOrgs(
       .eq('membership.user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    console.log('getUserOrgs - Query result:', { orgs, error });
+
+    if (error) {
+      console.error('getUserOrgs - Supabase error:', error);
+      throw error;
+    }
+
+    console.log('getUserOrgs - Returning orgs:', orgs);
     return orgs || [];
   } catch (error) {
-    console.error('Error getting user orgs:', error);
+    console.error('getUserOrgs - Error:', error);
     return [];
   }
 }
