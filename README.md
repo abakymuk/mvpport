@@ -40,6 +40,38 @@ docker compose logs -f web
 docker compose down
 ```
 
+### Container Images
+
+Готовые Docker образы доступны в GitHub Container Registry:
+
+```bash
+# Загрузка staging образа
+docker pull ghcr.io/abakymuk/mvpport:staging
+
+# Запуск приложения
+docker run -p 3000:3000 ghcr.io/abakymuk/mvpport:staging
+
+# Загрузка образа с конкретным SHA
+docker pull ghcr.io/abakymuk/mvpport:main-<sha>
+```
+
+**Доступные теги:**
+
+- `staging` - последняя версия из main ветки
+- `latest` - стабильная версия
+- `main-<sha>` - версия с конкретным коммитом
+
+**Поддерживаемые платформы:**
+
+- ✅ linux/amd64
+- ✅ linux/arm64 (Apple Silicon, ARM серверы)
+
+**Безопасность:**
+
+- Образы сканируются на уязвимости с помощью Trivy
+- Используется non-root пользователь
+- Минимальный размер образа
+
 **Доступные сервисы:**
 
 - **Приложение**: http://localhost:3000
@@ -188,6 +220,7 @@ pnpm dev --no-turbopack
 - [Runbook](docs/runbook.md) — операционные процедуры
 - [Prisma Guide](docs/prisma-guide.md) — работа с базой данных
 - [RLS Guide](docs/rls-guide.md) — Row Level Security и безопасность данных
+- [Docker Guide](docs/docker-guide.md) — работа с Docker образами
 
 ## Следующие шаги
 
