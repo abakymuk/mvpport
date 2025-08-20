@@ -42,6 +42,7 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
   const [creating, setCreating] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // Загружаем организации пользователя
@@ -52,9 +53,15 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
   const loadUserOrgs = async () => {
     try {
       setLoading(true);
+      setError(null);
+      console.log('Loading user organizations...');
+
       const response = await fetch('/api/orgs');
+      console.log('Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Organizations data:', data);
         setOrgs(data.orgs || []);
 
         // Устанавливаем активную организацию
@@ -63,9 +70,14 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
         } else if (data.orgs && data.orgs.length > 0) {
           setActiveOrgId(data.orgs[0].id);
         }
+      } else {
+        const errorData = await response.json();
+        console.error('Error loading orgs:', errorData);
+        setError(errorData.error || 'Ошибка загрузки организаций');
       }
     } catch (error) {
       console.error('Error loading orgs:', error);
+      setError('Ошибка загрузки организаций');
     } finally {
       setLoading(false);
     }
@@ -73,6 +85,8 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
 
   const handleOrgChange = async (orgId: string) => {
     try {
+      console.log('Switching to organization:', orgId);
+
       const response = await fetch('/api/orgs/switch', {
         method: 'POST',
         headers: {
@@ -84,9 +98,14 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
       if (response.ok) {
         setActiveOrgId(orgId);
         router.refresh(); // Обновляем страницу для применения изменений
+      } else {
+        const errorData = await response.json();
+        console.error('Error switching org:', errorData);
+        setError(errorData.error || 'Ошибка переключения организации');
       }
     } catch (error) {
       console.error('Error switching org:', error);
+      setError('Ошибка переключения организации');
     }
   };
 
@@ -96,6 +115,9 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
 
     try {
       setCreating(true);
+      setError(null);
+      console.log('Creating organization:', newOrgName.trim());
+
       const response = await fetch('/api/orgs', {
         method: 'POST',
         headers: {
@@ -104,16 +126,24 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
         body: JSON.stringify({ name: newOrgName.trim() }),
       });
 
+      console.log('Create org response status:', response.status);
+
       if (response.ok) {
         const newOrg = await response.json();
+        console.log('Created organization:', newOrg);
         setOrgs((prev) => [newOrg, ...prev]);
         setActiveOrgId(newOrg.id);
         setNewOrgName('');
         setIsDialogOpen(false);
         router.refresh();
+      } else {
+        const errorData = await response.json();
+        console.error('Error creating org:', errorData);
+        setError(errorData.error || 'Ошибка создания организации');
       }
     } catch (error) {
       console.error('Error creating org:', error);
+      setError('Ошибка создания организации');
     } finally {
       setCreating(false);
     }
@@ -149,6 +179,11 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
     return (
       <div className={`space-y-2 ${className}`}>
         <p className="text-sm text-muted-foreground">Нет организаций</p>
+        {error && (
+          <div className="p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+            {error}
+          </div>
+        )}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="w-full">
@@ -174,6 +209,11 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
                   required
                 />
               </div>
+              {error && (
+                <div className="p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
+              )}
               <Button type="submit" disabled={creating} className="w-full">
                 {creating ? (
                   <>
@@ -197,6 +237,12 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
         <Building2 className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">Организация</span>
       </div>
+
+      {error && (
+        <div className="p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+          {error}
+        </div>
+      )}
 
       <Select value={activeOrgId || ''} onValueChange={handleOrgChange}>
         <SelectTrigger className="w-full">
@@ -239,6 +285,11 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
                 required
               />
             </div>
+            {error && (
+              <div className="p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+                {error}
+              </div>
+            )}
             <Button type="submit" disabled={creating} className="w-full">
               {creating ? (
                 <>
