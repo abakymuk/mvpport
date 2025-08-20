@@ -139,7 +139,13 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
       } else {
         const errorData = await response.json();
         console.error('Error creating org:', errorData);
-        setError(errorData.error || 'Ошибка создания организации');
+
+        // Специальная обработка для ошибки дублирования
+        if (response.status === 409) {
+          setError('Организация с таким названием уже существует');
+        } else {
+          setError(errorData.error || 'Ошибка создания организации');
+        }
       }
     } catch (error) {
       console.error('Error creating org:', error);
@@ -149,7 +155,9 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
     }
   };
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role?: string) => {
+    if (!role) return null;
+
     const roleColors = {
       OWNER: 'bg-red-100 text-red-800',
       ADMIN: 'bg-orange-100 text-orange-800',
@@ -253,7 +261,7 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
             <SelectItem key={org.id} value={org.id}>
               <div className="flex items-center justify-between w-full">
                 <span className="truncate">{org.name}</span>
-                {getRoleBadge(org.membership.role)}
+                {getRoleBadge(org.membership?.role)}
               </div>
             </SelectItem>
           ))}

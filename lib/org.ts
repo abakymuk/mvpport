@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Database } from '@/lib/supabase/types';
+import { ensureProfile } from '@/lib/create-profile';
 
 type Org = Database['public']['Tables']['orgs']['Row'];
 type Membership = Database['public']['Tables']['memberships']['Row'];
@@ -171,6 +172,24 @@ export async function createOrg(name: string, ownerId: string): Promise<Org> {
 
     const supabase = await createClient();
 
+    // Проверяем, существует ли уже организация с таким названием
+    console.log(
+      'createOrg - Checking if organization with this name exists...'
+    );
+    const { data: existingOrg } = await supabase
+      .from('orgs')
+      .select('id, name')
+      .eq('name', name)
+      .single();
+
+    if (existingOrg) {
+      console.log(
+        'createOrg - Organization with this name already exists:',
+        existingOrg
+      );
+      throw new Error('Организация с таким названием уже существует');
+    }
+
     // Создаем организацию
     console.log('createOrg - Creating organization...');
     const { data: org, error: orgError } = await supabase
@@ -189,22 +208,11 @@ export async function createOrg(name: string, ownerId: string): Promise<Org> {
 
     console.log('createOrg - Organization created:', org);
 
-    // Добавляем владельца как члена с ролью OWNER
-    console.log('createOrg - Creating membership...');
-    const { error: membershipError } = await supabase
-      .from('memberships')
-      .insert({
-        user_id: ownerId,
-        org_id: org.id,
-        role: 'OWNER',
-      });
+    // Членство владельца создается автоматически триггером
+    console.log('createOrg - Membership will be created by trigger');
 
-    if (membershipError) {
-      console.error('createOrg - Error creating membership:', membershipError);
-      throw membershipError;
-    }
-
-    console.log('createOrg - Membership created successfully');
+    // Небольшая задержка для завершения триггера
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Устанавливаем новую организацию как активную
     console.log('createOrg - Setting active org...');
@@ -256,26 +264,59 @@ export async function updateOrg(
  */
 export async function getOrgMembers(orgId: string) {
   try {
+    console.log('getOrgMembers - Starting with orgId:', orgId);
     const supabase = await createClient();
 
-    const { data: members, error } = await supabase
+    // Сначала получаем членства без профилей
+    const { data: memberships, error: membershipsError } = await supabase
       .from('memberships')
-      .select(
-        `
-        *,
-        profile:profiles!inner(
-          id,
-          user_id,
-          full_name,
-          email
-        )
-      `
-      )
+      .select('*')
       .eq('org_id', orgId)
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
-    return members || [];
+    console.log('getOrgMembers - Memberships result:', {
+      memberships,
+      membershipsError,
+    });
+
+    if (membershipsError) {
+      console.error(
+        'getOrgMembers - Error getting memberships:',
+        membershipsError
+      );
+      throw membershipsError;
+    }
+
+    if (!memberships || memberships.length === 0) {
+      console.log('getOrgMembers - No memberships found');
+      return [];
+    }
+
+    // Получаем профили для всех пользователей и создаем их при необходимости
+    const members = [];
+    for (const membership of memberships) {
+      try {
+        // Убеждаемся, что профиль существует
+        const profile = await ensureProfile(membership.user_id);
+        members.push({
+          ...membership,
+          profile,
+        });
+      } catch (error) {
+        console.error(
+          `Error ensuring profile for user ${membership.user_id}:`,
+          error
+        );
+        // Добавляем членство без профиля
+        members.push({
+          ...membership,
+          profile: null,
+        });
+      }
+    }
+
+    console.log('getOrgMembers - Final members:', members);
+    return members;
   } catch (error) {
     console.error('Error getting org members:', error);
     return [];

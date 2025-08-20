@@ -163,16 +163,16 @@ export default async function MembersPage() {
                         <AvatarFallback>
                           {getInitials(
                             member.profile?.full_name,
-                            member.profile?.email || ''
+                            member.profile?.email || member.user_id || ''
                           )}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium">
-                          {member.profile?.full_name || 'Без имени'}
+                          {member.profile?.full_name || 'Пользователь'}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {member.profile?.email}
+                          {member.profile?.email || member.user_id}
                         </div>
                       </div>
                     </div>

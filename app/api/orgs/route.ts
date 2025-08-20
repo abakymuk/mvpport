@@ -73,15 +73,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('POST /api/orgs - Creating org with name:', name.trim());
+    // Проверяем длину названия
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2) {
+      console.error('POST /api/orgs - Name too short:', trimmedName);
+      return NextResponse.json(
+        { error: 'Название организации должно содержать минимум 2 символа' },
+        { status: 400 }
+      );
+    }
+
+    if (trimmedName.length > 100) {
+      console.error('POST /api/orgs - Name too long:', trimmedName);
+      return NextResponse.json(
+        { error: 'Название организации не должно превышать 100 символов' },
+        { status: 400 }
+      );
+    }
+
+    console.log('POST /api/orgs - Creating org with name:', trimmedName);
 
     // Создаем новую организацию
-    const newOrg = await createOrg(name.trim(), user.id);
+    const newOrg = await createOrg(trimmedName, user.id);
     console.log('POST /api/orgs - Created org:', newOrg);
 
-    return NextResponse.json(newOrg, { status: 201 });
+    // Получаем полную информацию об организации с членством
+    const userOrgs = await getUserOrgs(user.id);
+    const createdOrgWithMembership = userOrgs.find(
+      (org) => org.id === newOrg.id
+    );
+
+    return NextResponse.json(createdOrgWithMembership || newOrg, {
+      status: 201,
+    });
   } catch (error) {
     console.error('POST /api/orgs - Error:', error);
+
+    // Проверяем, является ли это ошибкой дублирования
+    if (error instanceof Error) {
+      if (error.message.includes('уже существует')) {
+        return NextResponse.json({ error: error.message }, { status: 409 });
+      }
+
+      // Проверяем ошибки Supabase
+      if (error.message.includes('duplicate key')) {
+        return NextResponse.json(
+          { error: 'Организация с таким названием уже существует' },
+          { status: 409 }
+        );
+      }
+    }
+
     return NextResponse.json(
       {
         error: 'Internal server error',
