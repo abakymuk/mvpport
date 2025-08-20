@@ -1,0 +1,120 @@
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docker-build.yml"
+      - "next.config.ts"
+      - "tailwind.config.ts"
+      - "tsconfig.json"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Comment PR with image info
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const imageName = '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}';
+            const tags = '${{ steps.meta.outputs.tags }}'.split('\n').filter(tag => tag.trim());
+            
+            const comment = `## 🐳 Docker Image Built Successfully
+            
+            **Image:** \`${imageName}\`
+            **Tags:** ${tags.map(tag => \`\`${tag}\`\`).join(', ')}
+            
+            ### Pull Command
+            \`\`\`bash
+            docker pull ${imageName}:staging
+            \`\`\`
+            
+            ### Run Command
+            \`\`\`bash
+            docker run -p 3000:3000 ${imageName}:staging
+            \`\`\`
+            
+            ### Multi-platform Support
+            - ✅ linux/amd64
+            - ✅ linux/arm64
+            
+            Image is available at: https://github.com/${{ github.repository }}/pkgs/container/${{ env.IMAGE_NAME }}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
