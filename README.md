@@ -1,36 +1,194 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MVP Port
 
-## Getting Started
+[![CI](https://github.com/abakymuk/mvpport/actions/workflows/ci.yml/badge.svg)](https://github.com/abakymuk/mvpport/actions/workflows/ci.yml)
 
-First, run the development server:
+Монолитный базис на Next.js 15 (App Router) для быстрого старта проектов.
+
+## Быстрый старт
+
+### Предварительные требования
+
+- Node.js 20.12.2 (указано в `.nvmrc`)
+- pnpm 10+
+
+### Установка и запуск
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Клонирование репозитория
+git clone git@github.com:abakymuk/mvpport.git
+cd mvpport
+
+# Установка зависимостей
+pnpm install
+
+# Запуск в режиме разработки
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000) в браузере.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Docker (рекомендуется)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Запуск всей среды разработки
+docker compose up -d
 
-## Learn More
+# Просмотр логов
+docker compose logs -f web
 
-To learn more about Next.js, take a look at the following resources:
+# Остановка всех сервисов
+docker compose down
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Доступные сервисы:**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Приложение**: http://localhost:3000
+- **Mailhog UI**: http://localhost:8025 (просмотр писем)
+- **PostgreSQL**: localhost:5432
 
-## Deploy on Vercel
+**Команды для работы с Docker:**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Запуск только web сервиса
+docker compose up web
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Пересборка образов
+docker compose build
+
+# Очистка данных
+docker compose down -v
+
+# Просмотр статуса сервисов
+docker compose ps
+```
+
+### Доступные команды
+
+```bash
+pnpm dev          # Запуск сервера разработки
+pnpm build        # Сборка для продакшена
+pnpm start        # Запуск продакшен сервера
+pnpm lint         # Проверка кода ESLint
+pnpm typecheck    # Проверка типов TypeScript
+pnpm format       # Форматирование кода Prettier
+
+# База данных (Prisma)
+pnpm db:generate  # Генерация Prisma клиента
+pnpm db:push      # Синхронизация схемы с БД
+pnpm db:migrate   # Создание и применение миграций
+pnpm db:seed      # Заполнение БД тестовыми данными
+pnpm db:studio    # Запуск Prisma Studio
+```
+
+### Структура проекта
+
+```
+app/
+├── api/
+│   ├── health/      # Health endpoint
+│   └── prisma-test/ # Тест Prisma
+├── dashboard/       # Панель управления
+├── login/          # Страница входа
+└── page.tsx        # Главная страница
+config/
+└── version.ts      # Версия приложения
+components/         # React компоненты
+lib/
+├── prisma.ts       # Prisma клиент
+├── prisma-rls.ts   # Prisma с RLS поддержкой
+└── supabase/       # Supabase интеграция
+prisma/
+├── schema.prisma   # Схема базы данных
+└── seed.ts         # Seed данные
+supabase/
+├── rls-policies.sql # RLS политики
+├── rls-tests.sql   # Тесты безопасности
+└── schema.sql      # Дополнительная схема
+```
+
+### Health Check
+
+Проверка состояния приложения: `GET /api/health`
+
+```json
+{
+  "status": "ok",
+  "version": "0.1.0"
+}
+```
+
+## Разработка
+
+Проект использует:
+
+- **Next.js 15** с App Router
+- **TypeScript** в строгом режиме
+- **ESLint** + **Prettier** для качества кода
+- **Husky** + **lint-staged** для pre-commit хуков
+
+## Архитектурные решения
+
+Важные архитектурные решения документированы в [Architecture Decision Records (ADR)](docs/adr/README.md).
+
+### Правило обновления ADR
+
+**Все существенные архитектурные изменения должны сопровождаться ADR.** Это включает:
+
+- Изменения в архитектуре приложения
+- Выбор новых технологий или библиотек
+- Изменения в подходе к разработке
+- Решения, влияющие на производительность или масштабируемость
+
+### Текущие ADR
+
+- [ADR-0001: Choose Next.js monolith for MVP](docs/adr/0001-monolith-nextjs.md)
+- [ADR-0002: Adopt shadcn/ui + Tailwind for UI](docs/adr/0002-ui-shadcn-tailwind.md)
+
+## Troubleshooting
+
+### Частые проблемы
+
+#### Ошибки TypeScript
+
+```bash
+# Очистка кэша TypeScript
+rm -rf .next
+rm -rf node_modules/.cache
+pnpm typecheck
+```
+
+#### Проблемы с зависимостями
+
+```bash
+# Очистка и переустановка
+rm -rf node_modules
+rm pnpm-lock.yaml
+pnpm install
+```
+
+#### Проблемы с Turbopack
+
+```bash
+# Отключение Turbopack
+pnpm dev --no-turbopack
+```
+
+### Дополнительная помощь
+
+- [Runbook](docs/runbook.md) — операционные процедуры
+- [CONTRIBUTING.md](CONTRIBUTING.md) — правила участия в разработке
+- [GitHub Issues](https://github.com/abakymuk/mvpport/issues) — сообщения о проблемах
+
+## Документация
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — правила участия в разработке
+- [CHANGELOG.md](CHANGELOG.md) — история изменений
+- [SECURITY.md](SECURITY.md) — политика безопасности
+- [ADR](docs/adr/README.md) — архитектурные решения
+- [Runbook](docs/runbook.md) — операционные процедуры
+- [Prisma Guide](docs/prisma-guide.md) — работа с базой данных
+- [RLS Guide](docs/rls-guide.md) — Row Level Security и безопасность данных
+
+## Следующие шаги
+
+См. документацию в папке `tickets/` для планирования дальнейшей разработки.

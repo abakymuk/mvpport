@@ -1,0 +1,43 @@
+# CODEOWNERS
+
+# Владельцы всей документации
+docs/ @mvpport/docs-team
+*.md @mvpport/docs-team
+
+# Владельцы архитектурных решений
+docs/adr/ @mvpport/arch-team
+tickets/ @mvpport/arch-team
+
+# Владельцы конфигурации проекта
+package.json @mvpport/dev-team
+pnpm-lock.yaml @mvpport/dev-team
+tsconfig.json @mvpport/dev-team
+next.config.ts @mvpport/dev-team
+tailwind.config.ts @mvpport/dev-team
+eslint.config.mjs @mvpport/dev-team
+.prettierrc @mvpport/dev-team
+
+# Владельцы GitHub конфигурации
+.github/ @mvpport/dev-team
+
+# Владельцы Docker конфигурации
+Dockerfile @mvpport/devops-team
+docker-compose.yml @mvpport/devops-team
+
+# Владельцы базы данных
+prisma/ @mvpport/backend-team
+supabase/ @mvpport/backend-team
+
+# Владельцы UI компонентов
+components/ @mvpport/frontend-team
+app/ @mvpport/frontend-team
+
+# Владельцы утилит и библиотек
+lib/ @mvpport/dev-team
+config/ @mvpport/dev-team
+
+# Владельцы публичных ресурсов
+public/ @mvpport/design-team
+
+# Владельцы всего проекта (fallback)
+* @mvpport/maintainers
