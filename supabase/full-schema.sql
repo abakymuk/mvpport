@@ -10,8 +10,8 @@ CREATE TYPE public.role AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
 
 -- Создание таблицы профилей пользователей
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  user_id TEXT UNIQUE NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID UNIQUE NOT NULL,
   display_name TEXT,
   avatar_url TEXT,
   locale TEXT DEFAULT 'en',
@@ -21,18 +21,18 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- Создание таблицы организаций
 CREATE TABLE IF NOT EXISTS public.orgs (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  owner_id TEXT NOT NULL,
+  owner_id UUID NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Создание таблицы членства
 CREATE TABLE IF NOT EXISTS public.memberships (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  user_id TEXT NOT NULL,
-  org_id TEXT NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  org_id UUID NOT NULL,
   role public.role DEFAULT 'MEMBER',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
@@ -153,7 +153,7 @@ CREATE TRIGGER on_orgs_updated
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Функция для проверки роли пользователя в организации
-CREATE OR REPLACE FUNCTION public.is_member(p_org_id TEXT, p_min_role TEXT DEFAULT 'MEMBER')
+CREATE OR REPLACE FUNCTION public.is_member(p_org_id UUID, p_min_role TEXT DEFAULT 'MEMBER')
 RETURNS BOOLEAN
 LANGUAGE SQL STABLE
 AS $$
@@ -169,20 +169,6 @@ AS $$
       )
   );
 $$;
-
--- Создание демо данных (опционально)
--- INSERT INTO public.profiles (user_id, display_name, locale) VALUES
---   ('demo-user-1', 'Demo User 1', 'ru'),
---   ('demo-user-2', 'Demo User 2', 'ru');
-
--- INSERT INTO public.orgs (id, name, owner_id) VALUES
---   ('demo-organization-id', 'Demo Organization', 'demo-user-1'),
---   ('test-company-id', 'Test Company', 'demo-user-2');
-
--- INSERT INTO public.memberships (user_id, org_id, role) VALUES
---   ('demo-user-1', 'demo-organization-id', 'OWNER'),
---   ('demo-user-2', 'test-company-id', 'OWNER'),
---   ('demo-user-2', 'demo-organization-id', 'MEMBER');
 
 -- Комментарии к таблицам
 COMMENT ON TABLE public.profiles IS 'Профили пользователей';

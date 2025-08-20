@@ -26,7 +26,7 @@
 - ✅ Таблицы: `profiles`, `orgs`, `memberships`
 - ✅ Enum тип: `role` (OWNER, ADMIN, MEMBER, VIEWER)
 - ✅ Индексы для производительности
-- ✅ Внешние ключи
+- ✅ Внешние ключи (UUID совместимые с auth.users)
 - ✅ Row Level Security (RLS) политики
 - ✅ Триггеры для автоматического создания профилей
 - ✅ Функции для проверки ролей
@@ -89,6 +89,7 @@
    ```
 
 2. Проверьте Supabase подключение:
+
    ```
    GET https://mvpport-2923mj3cc-vlad-ovelians-projects.vercel.app/api/supabase-test
    ```
@@ -122,13 +123,18 @@
 **Причина**: Триггер не работает
 **Решение**: Проверьте функцию `handle_new_user()` и триггер
 
+### Ошибка "column does not exist"
+
+**Причина**: Неправильные имена колонок в auth.users
+**Решение**: В Supabase auth.users использует колонку `id` (UUID), не `owner_id`
+
 ## Структура данных
 
 ### Таблица `profiles`
 
 ```sql
-- id: TEXT (Primary Key)
-- user_id: TEXT (Foreign Key → auth.users.id)
+- id: UUID (Primary Key)
+- user_id: UUID (Foreign Key → auth.users.id)
 - display_name: TEXT
 - avatar_url: TEXT
 - locale: TEXT (default: 'en')
@@ -139,9 +145,9 @@
 ### Таблица `orgs`
 
 ```sql
-- id: TEXT (Primary Key)
+- id: UUID (Primary Key)
 - name: TEXT
-- owner_id: TEXT (Foreign Key → auth.users.id)
+- owner_id: UUID (Foreign Key → auth.users.id)
 - created_at: TIMESTAMP
 - updated_at: TIMESTAMP
 ```
@@ -149,9 +155,9 @@
 ### Таблица `memberships`
 
 ```sql
-- id: TEXT (Primary Key)
-- user_id: TEXT (Foreign Key → auth.users.id)
-- org_id: TEXT (Foreign Key → orgs.id)
+- id: UUID (Primary Key)
+- user_id: UUID (Foreign Key → auth.users.id)
+- org_id: UUID (Foreign Key → orgs.id)
 - role: ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER')
 - created_at: TIMESTAMP
 ```
@@ -189,4 +195,10 @@ WHERE schemaname = 'public';
 SELECT trigger_name, event_manipulation, event_object_table, action_statement
 FROM information_schema.triggers
 WHERE trigger_schema = 'public';
+```
+
+### Проверка структуры auth.users
+
+```sql
+\d auth.users
 ```
