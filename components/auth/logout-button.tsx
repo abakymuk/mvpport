@@ -1,27 +1,70 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 
-export function LogoutButton() {
+interface LogoutButtonProps {
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function LogoutButton({
+  variant = 'outline',
+  size = 'default',
+  className = '',
+  children,
+}: LogoutButtonProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const supabase = createBrowserClient();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
+    setIsLoading(true);
+
+    try {
+      const { createBrowserClient } = await import('@/lib/supabase');
+      const supabase = createBrowserClient();
+
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('Ошибка при выходе:', error);
+        // Можно добавить toast уведомление об ошибке
+      } else {
+        // Успешный выход
+        router.push('/login');
+        router.refresh(); // Обновляем кэш
+      }
+    } catch (error) {
+      console.error('Неожиданная ошибка при выходе:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Button
-      variant="ghost"
+      variant={variant}
+      size={size}
       onClick={handleLogout}
-      className="w-full justify-start"
+      disabled={isLoading}
+      className={className}
     >
-      <LogOut className="mr-2 h-4 w-4" />
-      Выйти
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+      ) : (
+        <LogOut className="h-4 w-4 mr-2" />
+      )}
+      {children || (isLoading ? 'Выход...' : 'Выйти')}
     </Button>
   );
 }
