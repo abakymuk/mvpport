@@ -29,11 +29,15 @@
    - **Name**: `MVP Port OAuth`
    - **Authorized JavaScript origins**:
      ```
+     https://mvpport-q5wfgye01-vlad-ovelians-projects.vercel.app
+     https://mvpport-swiyi3xgb-vlad-ovelians-projects.vercel.app
      https://mvpport-2923mj3cc-vlad-ovelians-projects.vercel.app
      http://localhost:3000
      ```
    - **Authorized redirect URIs**:
      ```
+     https://mvpport-q5wfgye01-vlad-ovelians-projects.vercel.app/auth/callback
+     https://mvpport-swiyi3xgb-vlad-ovelians-projects.vercel.app/auth/callback
      https://mvpport-2923mj3cc-vlad-ovelians-projects.vercel.app/auth/callback
      http://localhost:3000/auth/callback
      ```
@@ -62,8 +66,8 @@
 2. Нажмите **New OAuth App**
 3. Заполните форму:
    - **Application name**: `MVP Port`
-   - **Homepage URL**: `https://mvpport-2923mj3cc-vlad-ovelians-projects.vercel.app`
-   - **Authorization callback URL**: `https://mvpport-2923mj3cc-vlad-ovelians-projects.vercel.app/auth/callback`
+   - **Homepage URL**: `https://mvpport-q5wfgye01-vlad-ovelians-projects.vercel.app`
+   - **Authorization callback URL**: `https://mvpport-q5wfgye01-vlad-ovelians-projects.vercel.app/auth/callback`
 
 ### 2. Получение учетных данных
 
@@ -119,7 +123,11 @@
 ### Ошибка "redirect_uri_mismatch"
 
 **Причина**: Неправильный redirect URI в настройках провайдера
-**Решение**: Проверьте и исправьте redirect URIs в Google/GitHub настройках
+**Решение**:
+
+1. Проверьте и исправьте redirect URIs в Google/GitHub настройках
+2. Убедитесь, что используете актуальный URL приложения
+3. Добавьте все возможные URL (включая старые деплои)
 
 ### Ошибка "invalid_client"
 
@@ -136,7 +144,7 @@
 ### Рекомендации
 
 1. **Храните секреты безопасно**: Не коммитьте Client Secret в репозиторий
-2. **Используйте HTTPS**: Всегда используйте HTTPS в продакшене
+2. **Используйте HTTPS**: Всегда используйте HTTPS в продакшне
 3. **Ограничьте домены**: Настройте только нужные домены в OAuth провайдерах
 4. **Мониторинг**: Следите за логами аутентификации
 
@@ -162,7 +170,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 - [ ] Создан проект в Google Cloud Console
 - [ ] Настроен OAuth 2.0 Client ID
-- [ ] Добавлены правильные redirect URIs
+- [ ] Добавлены правильные redirect URIs (включая все актуальные URL)
 - [ ] Настроен в Supabase Dashboard
 - [ ] Протестирован вход
 
@@ -179,3 +187,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 - [ ] Протестированы все провайдеры
 - [ ] Проверена безопасность
 - [ ] Документированы настройки
+
+## 🚨 Важно!
+
+**Актуальные URL для настройки:**
+
+- Основной: `https://mvpport-q5wfgye01-vlad-ovelians-projects.vercel.app`
+- Резервный: `https://mvpport-swiyi3xgb-vlad-ovelians-projects.vercel.app`
+- Локальный: `http://localhost:3000`
+
+**Обязательно добавьте все эти URL в настройки OAuth провайдеров!**

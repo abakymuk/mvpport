@@ -31,6 +31,15 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [authMethod, setAuthMethod] = useState<AuthMethod>('password');
   const router = useRouter();
 
+  // Получаем актуальный URL для redirect
+  const getRedirectUrl = () => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/auth/callback`;
+    }
+    // Fallback для SSR
+    return 'https://mvpport-q5wfgye01-vlad-ovelians-projects.vercel.app/auth/callback';
+  };
+
   const handlePasswordAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -46,7 +55,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           email,
           password,
           options: {
-            emailRedirectTo: `${location.origin}/auth/callback`,
+            emailRedirectTo: getRedirectUrl(),
           },
         });
         if (error) throw error;
@@ -79,7 +88,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
+          emailRedirectTo: getRedirectUrl(),
         },
       });
 
@@ -103,7 +112,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl(),
         },
       });
 
