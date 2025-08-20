@@ -19,7 +19,7 @@ export async function GET() {
       environment: envCheck,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch {
     // Fallback response
     return NextResponse.json({
       status: 'ok',

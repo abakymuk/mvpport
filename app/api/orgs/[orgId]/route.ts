@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPrismaClientWithRLS, OrgService } from '@/lib/prisma-rls';
 
-interface Params {
-  orgId: string;
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
+    const { orgId } = await params;
     const { prisma, userId } = await createPrismaClientWithRLS();
     const orgService = new OrgService(prisma, userId);
 
-    const org = await orgService.getOrg(params.orgId);
+    const org = await orgService.getOrg(orgId);
 
     if (!org) {
       return NextResponse.json(
@@ -48,9 +45,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
+    const { orgId } = await params;
     const { prisma, userId } = await createPrismaClientWithRLS();
     const orgService = new OrgService(prisma, userId);
 
@@ -72,7 +70,7 @@ export async function PATCH(
       updateData.name = name.trim();
     }
 
-    const org = await orgService.updateOrg(params.orgId, updateData);
+    const org = await orgService.updateOrg(orgId, updateData);
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,28 +14,36 @@ import {
 export function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createBrowserClient();
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
+      try {
+        // Динамический импорт для избежания ошибок при SSR
+        const { createBrowserClient } = await import('@/lib/supabase');
+        const supabase = createBrowserClient();
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
+        setLoading(false);
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+          setUser(session?.user ?? null);
+          setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('Error initializing Supabase client:', error);
+        setLoading(false);
+      }
     };
 
     getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   if (loading) {
     return (

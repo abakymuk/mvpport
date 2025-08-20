@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPrismaClientWithRLS, OrgService } from '@/lib/prisma-rls';
 
-interface Params {
-  orgId: string;
-}
-
 export async function POST(
   request: NextRequest,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
+    const { orgId } = await params;
     const { prisma, userId } = await createPrismaClientWithRLS();
     const orgService = new OrgService(prisma, userId);
 
@@ -31,7 +28,7 @@ export async function POST(
     }
 
     const membership = await orgService.inviteMember(
-      params.orgId,
+      orgId,
       inviteUserId,
       role as 'MEMBER' | 'ADMIN'
     );

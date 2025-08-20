@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +25,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createBrowserClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +32,10 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError(null);
 
     try {
+      // Динамический импорт для избежания ошибок при SSR
+      const { createBrowserClient } = await import('@/lib/supabase');
+      const supabase = createBrowserClient();
+
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
           email,
@@ -103,59 +105,34 @@ export function AuthForm({ mode }: AuthFormProps) {
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Введите пароль"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 pr-10"
                 required
               />
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
-                <span className="sr-only">
-                  {showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-                </span>
-              </Button>
+              </button>
             </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading
-              ? mode === 'login'
-                ? 'Вход...'
-                : 'Регистрация...'
+              ? 'Загрузка...'
               : mode === 'login'
                 ? 'Войти'
                 : 'Зарегистрироваться'}
           </Button>
         </form>
-
-        <div className="mt-4 text-center text-sm">
-          {mode === 'login' ? (
-            <p>
-              Нет аккаунта?{' '}
-              <a href="/signup" className="text-primary hover:underline">
-                Зарегистрироваться
-              </a>
-            </p>
-          ) : (
-            <p>
-              Уже есть аккаунт?{' '}
-              <a href="/login" className="text-primary hover:underline">
-                Войти
-              </a>
-            </p>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
