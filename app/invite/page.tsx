@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +26,7 @@ interface InviteInfo {
   };
 }
 
-export default function InvitePage() {
+function InvitePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -298,5 +298,25 @@ export default function InvitePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function InvitePageLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4 animate-pulse" />
+        <h2 className="text-xl font-semibold mb-2">Загрузка приглашения...</h2>
+      </div>
+    </div>
+  );
+}
+
+export default function InvitePage() {
+  return (
+    <Suspense fallback={<InvitePageLoading />}>
+      <InvitePageContent />
+    </Suspense>
   );
 }
