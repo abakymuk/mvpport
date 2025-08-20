@@ -1,5 +1,23 @@
 import { createServerClient } from '@supabase/ssr';
 
+// Simple client without cookies
+function createSimpleClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {
+          // No-op for Vercel compatibility
+        },
+      },
+    }
+  );
+}
+
 export async function createClientWithCookies() {
   try {
     // Динамический импорт для совместимости с Vercel
@@ -30,7 +48,7 @@ export async function createClientWithCookies() {
     );
   } catch (error) {
     // Fallback to simple client
-    return createClient();
+    return createSimpleClient();
   }
 }
 
