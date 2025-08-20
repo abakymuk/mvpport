@@ -1,8 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 export async function createClient() {
   try {
+    // Динамический импорт для совместимости с Vercel
+    const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
 
     return createServerClient(
