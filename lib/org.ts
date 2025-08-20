@@ -157,9 +157,12 @@ export async function getOrg(orgId: string): Promise<Org | null> {
  */
 export async function createOrg(name: string, ownerId: string): Promise<Org> {
   try {
+    console.log('createOrg - Starting with name:', name, 'ownerId:', ownerId);
+
     const supabase = await createClient();
 
     // Создаем организацию
+    console.log('createOrg - Creating organization...');
     const { data: org, error: orgError } = await supabase
       .from('orgs')
       .insert({
@@ -169,9 +172,15 @@ export async function createOrg(name: string, ownerId: string): Promise<Org> {
       .select()
       .single();
 
-    if (orgError) throw orgError;
+    if (orgError) {
+      console.error('createOrg - Error creating org:', orgError);
+      throw orgError;
+    }
+
+    console.log('createOrg - Organization created:', org);
 
     // Добавляем владельца как члена с ролью OWNER
+    console.log('createOrg - Creating membership...');
     const { error: membershipError } = await supabase
       .from('memberships')
       .insert({
@@ -180,14 +189,21 @@ export async function createOrg(name: string, ownerId: string): Promise<Org> {
         role: 'OWNER',
       });
 
-    if (membershipError) throw membershipError;
+    if (membershipError) {
+      console.error('createOrg - Error creating membership:', membershipError);
+      throw membershipError;
+    }
+
+    console.log('createOrg - Membership created successfully');
 
     // Устанавливаем новую организацию как активную
+    console.log('createOrg - Setting active org...');
     await setActiveOrgId(ownerId, org.id);
 
+    console.log('createOrg - Successfully completed');
     return org;
   } catch (error) {
-    console.error('Error creating org:', error);
+    console.error('createOrg - Error:', error);
     throw error;
   }
 }
