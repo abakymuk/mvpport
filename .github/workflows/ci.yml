@@ -88,6 +88,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -110,11 +112,20 @@ jobs:
         run: pnpm audit --audit-level moderate
         continue-on-error: true
 
-      - name: Check for secrets in code
+      - name: Check for secrets in code (PR)
+        if: github.event_name == 'pull_request'
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.pull_request.base.sha || github.sha }}
-          head: ${{ github.sha }}
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified --fail
+        continue-on-error: true
+
+      - name: Check for secrets in code (Push)
+        if: github.event_name == 'push'
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
           extra_args: --only-verified --fail
         continue-on-error: true
