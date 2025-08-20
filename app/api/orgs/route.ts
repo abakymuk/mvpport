@@ -1,32 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPrismaClientWithRLS, OrgService } from '@/lib/prisma-rls';
+import { createClient } from '@/lib/supabase/server';
+import { getUserOrgs, getActiveOrgId, createOrg } from '@/lib/org';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { prisma, userId } = await createPrismaClientWithRLS();
-    const orgService = new OrgService(prisma, userId);
+    const supabase = await createClient();
 
-    const orgs = await orgService.getUserOrgs();
+    // Получаем текущего пользователя
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Получаем организации пользователя
+    const orgs = await getUserOrgs(user.id);
+
+    // Получаем активную организацию
+    const activeOrgId = await getActiveOrgId(user.id);
 
     return NextResponse.json({
-      success: true,
-      data: orgs,
+      orgs,
+      activeOrgId,
     });
   } catch (error) {
     console.error('Error fetching organizations:', error);
-
-    if (
-      error instanceof Error &&
-      error.message === 'Пользователь не аутентифицирован'
-    ) {
-      return NextResponse.json(
-        { success: false, error: 'Требуется аутентификация' },
-        { status: 401 }
-      );
-    }
-
     return NextResponse.json(
-      { success: false, error: 'Ошибка сервера' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -34,43 +37,36 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { prisma, userId } = await createPrismaClientWithRLS();
-    const orgService = new OrgService(prisma, userId);
+    const supabase = await createClient();
 
-    const body = await request.json();
-    const { name } = body;
+    // Получаем текущего пользователя
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Получаем данные из запроса
+    const { name } = await request.json();
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Название организации обязательно' },
+        { error: 'Organization name is required' },
         { status: 400 }
       );
     }
 
-    const org = await orgService.createOrg({ name: name.trim() });
+    // Создаем новую организацию
+    const newOrg = await createOrg(name.trim(), user.id);
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: org,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json(newOrg, { status: 201 });
   } catch (error) {
     console.error('Error creating organization:', error);
-
-    if (
-      error instanceof Error &&
-      error.message === 'Пользователь не аутентифицирован'
-    ) {
-      return NextResponse.json(
-        { success: false, error: 'Требуется аутентификация' },
-        { status: 401 }
-      );
-    }
-
     return NextResponse.json(
-      { success: false, error: 'Ошибка сервера' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
