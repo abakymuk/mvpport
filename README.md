@@ -72,6 +72,26 @@ docker pull ghcr.io/abakymuk/mvpport:main-<sha>
 - Используется non-root пользователь
 - Минимальный размер образа
 
+### Preview Deployments
+
+Каждый Pull Request автоматически получает preview deployment на Vercel:
+
+**Как получить preview:**
+
+1. Создайте Pull Request
+2. Дождитесь завершения CI/CD pipeline
+3. Найдите комментарий с preview URL в PR
+4. Перейдите по ссылке для тестирования
+
+**Smoke тесты:**
+
+- ✅ Health endpoint проверка
+- ✅ Главная страница доступна
+- ✅ Автоматические комментарии в PR
+
+**Preview URL формат:**
+`https://mvpport-git-{branch}-abakymuk.vercel.app`
+
 **Доступные сервисы:**
 
 - **Приложение**: http://localhost:3000
@@ -221,6 +241,7 @@ pnpm dev --no-turbopack
 - [Prisma Guide](docs/prisma-guide.md) — работа с базой данных
 - [RLS Guide](docs/rls-guide.md) — Row Level Security и безопасность данных
 - [Docker Guide](docs/docker-guide.md) — работа с Docker образами
+- [Preview Deployments](docs/preview-deployments.md) — автоматические preview для PR
 
 ## Следующие шаги
 

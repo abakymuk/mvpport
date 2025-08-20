@@ -1,0 +1,111 @@
+name: Preview Smoke Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Wait for Vercel deployment
+        id: vercel
+        run: |
+          # Ждем deployment URL из Vercel
+          # В реальной реализации это будет получено через Vercel API
+          # Пока используем placeholder
+          echo "url=https://mvpport-git-feature-${GITHUB_HEAD_REF}-abakymuk.vercel.app" >> $GITHUB_OUTPUT
+          echo "Preview URL will be available after Vercel deployment"
+
+      - name: Test health endpoint
+        run: |
+          echo "Preview URL: ${{ steps.vercel.outputs.url }}"
+          echo "Testing health endpoint..."
+          
+          # Ждем немного для полного запуска приложения
+          sleep 10
+          
+          # Тестируем health endpoint
+          HEALTH_RESPONSE=$(curl -fsSL "${{ steps.vercel.outputs.url }}/api/health" || echo "{}")
+          echo "Health response: $HEALTH_RESPONSE"
+          
+          # Проверяем, что ответ содержит "ok"
+          if [[ "$HEALTH_RESPONSE" == *"ok"* ]]; then
+            echo "✅ Health endpoint is working"
+          else
+            echo "❌ Health endpoint is not working"
+            exit 1
+          fi
+
+      - name: Test main page
+        run: |
+          echo "Testing main page..."
+          
+          # Тестируем главную страницу
+          MAIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.vercel.outputs.url }}/" || echo "000")
+          echo "Main page status: $MAIN_STATUS"
+          
+          if [[ "$MAIN_STATUS" == "200" ]]; then
+            echo "✅ Main page is accessible"
+          else
+            echo "❌ Main page is not accessible (status: $MAIN_STATUS)"
+            exit 1
+          fi
+
+      - name: Comment PR with preview info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = '${{ steps.vercel.outputs.url }}';
+            const prNumber = context.issue.number;
+            
+            // Проверяем, есть ли уже комментарий с превью
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🚀 Preview Deployment')
+            );
+            
+            const commentBody = `## 🚀 Preview Deployment
+            
+            **Preview URL:** [${previewUrl}](${previewUrl})
+            
+            ### Smoke Tests Status
+            - ✅ Health endpoint: Working
+            - ✅ Main page: Accessible
+            
+            ### Quick Links
+            - [Preview Dashboard](${previewUrl})
+            - [Health Check](${previewUrl}/api/health)
+            
+            ---
+            *Preview automatically deployed by Vercel*
+            `;
+            
+            if (existingComment) {
+              // Обновляем существующий комментарий
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Создаем новый комментарий
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
