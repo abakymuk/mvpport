@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrgId, getOrgMembers } from '@/lib/org';
-import { Users } from 'lucide-react';
 import { MembersPageClient } from '@/components/dashboard/members-page-client';
+import { Users } from 'lucide-react';
 
 export default async function MembersPage() {
   // Проверяем переменные окружения
@@ -15,7 +15,7 @@ export default async function MembersPage() {
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">Ошибка конфигурации</h2>
           <p className="text-muted-foreground">
-            Переменные окружения Supabase не настроены
+            Отсутствуют переменные окружения Supabase
           </p>
         </div>
       </div>
@@ -77,11 +77,23 @@ export default async function MembersPage() {
     const userRole = userMembership?.role || 'MEMBER';
 
     return (
-      <MembersPageClient
-        members={members}
-        activeOrgId={activeOrgId}
-        userRole={userRole}
-      />
+      <div className="px-4 sm:px-6 lg:px-8">
+        {/* Page Header */}
+        <div className="sm:flex sm:items-center mb-8">
+          <div className="sm:flex-auto">
+            <h1 className="text-3xl font-semibold leading-6">Участники</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Управление участниками организации
+            </p>
+          </div>
+        </div>
+
+        <MembersPageClient
+          members={members}
+          activeOrgId={activeOrgId}
+          userRole={userRole}
+        />
+      </div>
     );
   } catch (error) {
     console.error('Error in MembersPage:', error);
