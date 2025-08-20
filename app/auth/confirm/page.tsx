@@ -31,7 +31,12 @@ export default function ConfirmEmailPage() {
         if (token_hash && type) {
           const { error } = await supabase.auth.verifyOtp({
             token_hash,
-            type: type as any,
+            type: type as
+              | 'signup'
+              | 'magiclink'
+              | 'recovery'
+              | 'invite'
+              | 'email_change',
           });
 
           if (error) {
@@ -45,7 +50,7 @@ export default function ConfirmEmailPage() {
           setStatus('error');
           setMessage('Неверная ссылка для подтверждения.');
         }
-      } catch (error) {
+      } catch {
         setStatus('error');
         setMessage('Произошла ошибка при подтверждении email.');
       }
